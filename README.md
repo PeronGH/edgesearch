@@ -51,4 +51,4 @@ The implementation targets Workers Free, but deployed CPU usage and provider ava
 
 ## License
 
-AGPL-3.0-or-later. Engine request/extraction logic is adapted from [SearXNG](https://github.com/searxng/searxng), revision `c0042add30116a315ebacfcb84781bb3e1e4e77e`, specifically its `bing.py`, `duckduckgo.py`, `brave.py`, and `google_cse.py` engine modules. Copyright belongs to the respective SearXNG contributors. When deploying modified versions, publish the corresponding source and update the GUI's source link.
+[AGPL-3.0-or-later](LICENSE). Adapted from [SearXNG](https://github.com/searxng/searxng).
