@@ -20,7 +20,7 @@ export function mergeResults(groups: { engine: EngineName; results: EngineResult
 			seen.add(key);
 			const existing = merged.get(key);
 			const weight = engineRegistry[engine].weight;
-			const score = weight / (60 + index + 1);
+			const score = weight / (6 + index + 1);
 			if (existing) {
 				existing.score += score;
 				existing.result.engines.push(engine);
