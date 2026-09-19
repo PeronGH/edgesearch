@@ -13,7 +13,7 @@ let cachedToken: Token | undefined;
 async function getToken(signal: AbortSignal): Promise<Token> {
 	if (cachedToken && cachedToken.expires > Date.now()) return cachedToken;
 	const response = await fetch(`https://www.google.com/cse/cse.js?${new URLSearchParams({ cx })}`, {
-		headers, signal, redirect: 'manual',
+		headers, signal, redirect: 'follow',
 	});
 	await checkResponse(response, 'Google CSE token bootstrap');
 	const text = await response.text();
