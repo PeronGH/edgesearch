@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { decodeHTML } from 'entities';
-import { checkResponse, EngineError, headers, result, type Engine, type EngineResult } from './common';
+import { checkResponse, headers, result, type Engine, type EngineResult } from './common';
 
 export const brave: Engine = async (query, signal) => {
 	const response = await fetch(`https://search.brave.com/search?${new URLSearchParams({ q: query, source: 'web' })}`, {
@@ -11,7 +11,7 @@ export const brave: Engine = async (query, signal) => {
 			'Cookie': 'safesearch=moderate; useLocation=0; summarizer=0; country=us; ui_lang=en-us',
 		},
 	});
-	await checkResponse(response);
+	await checkResponse(response, 'Brave search');
 	const results: EngineResult[] = [];
 	let current: { title: string; href?: string; snippet: string; hasTitle: boolean; inTitle: boolean; hasSnippet: boolean; inSnippet: boolean } | undefined;
 	let dateDepth = 0;
@@ -68,6 +68,6 @@ export const brave: Engine = async (query, signal) => {
 		rewriter.on(selector, { element() { blocked = true; } });
 	}
 	await rewriter.transform(response).body!.pipeTo(new WritableStream({ write() {} }));
-	if (blocked) throw new EngineError('blocked');
+	if (blocked) throw new Error(`Brave search: CAPTCHA/challenge form detected (HTTP ${response.status})`);
 	return results;
 };

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { decodeHTML } from 'entities';
-import { checkResponse, EngineError, headers, result, type Engine, type EngineResult } from './common';
+import { checkResponse, headers, result, type Engine, type EngineResult } from './common';
 
 function destination(href: string): string {
 	let url = new URL(decodeHTML(href), 'https://www.bing.com');
@@ -18,7 +18,7 @@ export const bing: Engine = async (query, signal) => {
 	const response = await fetch(`https://www.bing.com/search?${new URLSearchParams({ q: query, setlang: 'en', adlt: 'moderate' })}`, {
 		headers, signal, redirect: 'manual',
 	});
-	await checkResponse(response);
+	await checkResponse(response, 'Bing search');
 	const results: EngineResult[] = [];
 	let current: { title: string; href?: string; snippet: string; inTitle: boolean } | undefined;
 	let iconDepth = 0;
@@ -61,6 +61,6 @@ export const bing: Engine = async (query, signal) => {
 		rewriter.on(selector, { element() { blocked = true; } });
 	}
 	await rewriter.transform(response).body!.pipeTo(new WritableStream({ write() {} }));
-	if (blocked) throw new EngineError('blocked');
+	if (blocked) throw new Error(`Bing search: CAPTCHA detected (HTTP ${response.status})`);
 	return results;
 };

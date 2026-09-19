@@ -15,7 +15,7 @@ async function getToken(signal: AbortSignal): Promise<Token> {
 	const response = await fetch(`https://www.google.com/cse/cse.js?${new URLSearchParams({ cx })}`, {
 		headers, signal, redirect: 'manual',
 	});
-	await checkResponse(response);
+	await checkResponse(response, 'Google CSE token bootstrap');
 	const text = await response.text();
 	const options = JSON.parse(text.slice(text.lastIndexOf('({') + 1, text.lastIndexOf('});') + 1)) as {
 		cse_token?: string;
@@ -51,10 +51,10 @@ export const googleCse: Engine = async (query, signal) => {
 		signal, redirect: 'manual',
 		headers: { ...headers, Accept: '*/*', Referer: 'https://cse.google.com/', Cookie: 'CONSENT=YES+' },
 	});
-	await checkResponse(response);
+	await checkResponse(response, 'Google CSE search');
 	const text = await response.text();
 	const data = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)) as SearchResponse;
-	if (data.error) throw new Error(data.error.message ?? `Google CSE error ${data.error.code}`);
+	if (data.error) throw new Error(`Google CSE search: ${data.error.code ?? 'API error'}: ${data.error.message ?? 'No error message provided'}`);
 	const results: EngineResult[] = [];
 	for (const item of data.results ?? []) {
 		const parsed = result(item.titleNoFormatting ?? '', item.unescapedUrl ?? '', item.contentNoFormatting ?? '');

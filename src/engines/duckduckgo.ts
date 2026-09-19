@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { decodeHTML } from 'entities';
-import { checkResponse, EngineError, headers, result, type Engine, type EngineResult } from './common';
+import { checkResponse, headers, result, type Engine, type EngineResult } from './common';
 
 function destination(href: string): string {
 	let url = new URL(decodeHTML(href), 'https://html.duckduckgo.com');
@@ -30,9 +30,9 @@ export const duckduckgo: Engine = async (query, signal) => {
 	}
 	if (response.status === 202) {
 		await response.body?.cancel();
-		throw new EngineError('blocked');
+		throw new Error('DuckDuckGo HTML search: HTTP 202 (challenge response)');
 	}
-	await checkResponse(response);
+	await checkResponse(response, 'DuckDuckGo HTML search');
 	const results: EngineResult[] = [];
 	let current: { title: string; href?: string; snippet: string; inTitle: boolean; hasSnippet: boolean; inSnippet: boolean } | undefined;
 	let blocked = false;
@@ -72,6 +72,6 @@ export const duckduckgo: Engine = async (query, signal) => {
 		})
 		.on('#challenge-form', { element() { blocked = true; } });
 	await rewriter.transform(response).body!.pipeTo(new WritableStream({ write() {} }));
-	if (blocked) throw new EngineError('blocked');
+	if (blocked) throw new Error(`DuckDuckGo HTML search: challenge form detected (HTTP ${response.status})`);
 	return results;
 };

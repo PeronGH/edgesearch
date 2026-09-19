@@ -13,7 +13,8 @@ async function runSearch(query) {
   try {
     const response = await fetch(`/api/v1/search?${new URLSearchParams({ q: query })}`, { signal });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error ?? 'Search is unavailable. Please try again later.');
+    const engineErrors = (data.engine_errors ?? []).map(({ engine, error }) => `${engine}: ${error}`).join('; ');
+    if (!response.ok) throw new Error(data.error ?? (engineErrors || `Search failed: HTTP ${response.status}`));
     for (const result of data.results) {
       const item = document.createElement('li');
       const heading = document.createElement('h2');
@@ -37,7 +38,7 @@ async function runSearch(query) {
       results.append(item);
     }
     status.textContent = data.results.length ? `${data.results.length} results` : 'No results found.';
-    if (data.partial) status.textContent += ` Some engines failed: ${data.engine_errors.map(({ engine, error }) => `${engine} (${error})`).join(', ')}.`;
+    if (data.partial) status.textContent += ` Some engines failed: ${engineErrors}`;
   } catch (error) {
     if (!signal.aborted) status.textContent = error.message;
   }
