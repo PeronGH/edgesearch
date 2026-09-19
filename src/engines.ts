@@ -15,14 +15,14 @@ export class EngineError extends Error {
 const selectors = {
 	bing: {
 		item: '#b_results > li.b_algo',
-		title: 'h2 a',
+		title: 'h2 > a',
 		snippet: 'p',
 		empty: '.b_no',
 		blocked: '#b_captcha, #b_captcha_container, iframe[src*="captcha"]',
 	},
 	duckduckgo: {
 		item: '#links > .web-result',
-		title: 'h2 a',
+		title: 'h2 > a',
 		snippet: '.result__snippet',
 		empty: '.no-results',
 		blocked: '#challenge-form',
@@ -45,25 +45,39 @@ function destination(href: string, engine: EngineName): string {
 	return url.href;
 }
 
-const clean = (text: string) => decodeHTML(text).replace(/\s+/g, ' ').trim();
+function clean(text: string, maxLength: number): string {
+	const normalized = decodeHTML(text).replace(/\s+/g, ' ').trim();
+	if (normalized.length <= maxLength) return normalized;
+	const characters = Array.from(normalized);
+	if (characters.length <= maxLength) return normalized;
+	const truncated = characters.slice(0, maxLength).join('');
+	const lastSpace = truncated.lastIndexOf(' ');
+	return (lastSpace < 0 ? truncated : truncated.slice(0, lastSpace)) + ' …';
+}
+
+function quoteBangs(query: string): string {
+	// Avoid maintaining a bang registry: neutralize every bang-like term.
+	return query.split(/\s+/).filter(Boolean).map((term) => term.startsWith('!') ? `'${term}'` : term).join(' ');
+}
 
 export async function parseResults(response: Response, engine: EngineName): Promise<EngineResult[]> {
 	const config = selectors[engine];
 	const results: EngineResult[] = [];
-	let current: { title: string; href: string; snippet: string } | undefined;
+	let current: { title: string; href: string; snippet: string; hasTitle: boolean; inTitle: boolean } | undefined;
+	let ignoredSnippetDepth = 0;
 	let empty = false;
 	let blocked = false;
 	const rewriter = new HTMLRewriter()
 		.on(config.item, {
 			element(element) {
-				const item = { title: '', href: '', snippet: '' };
+				const item = { title: '', href: '', snippet: '', hasTitle: false, inTitle: false };
 				current = item;
 				element.onEndTag(() => {
-					const title = clean(item.title);
+					const title = clean(item.title, 200);
 					if (title && item.href) {
 						const url = destination(item.href, engine);
-						const snippet = clean(item.snippet);
-						if (url) results.push({ title, url, snippets: snippet ? [snippet] : [] });
+						const snippet = clean(item.snippet, 1200);
+						if (url) results.push({ title, url, snippets: snippet && snippet !== title ? [snippet] : [] });
 					}
 					current = undefined;
 				});
@@ -71,10 +85,15 @@ export async function parseResults(response: Response, engine: EngineName): Prom
 		})
 		.on(`${config.item} ${config.title}`, {
 			element(element) {
-				if (current) current.href = element.getAttribute('href') ?? '';
+				if (!current || current.hasTitle) return;
+				const item = current;
+				item.hasTitle = true;
+				item.inTitle = true;
+				item.href = element.getAttribute('href') ?? '';
+				element.onEndTag(() => { item.inTitle = false; });
 			},
 			text(chunk) {
-				if (current) current.title += chunk.text;
+				if (current?.inTitle) current.title += chunk.text;
 			},
 		})
 		.on(`${config.item} ${config.snippet}`, {
@@ -82,10 +101,18 @@ export async function parseResults(response: Response, engine: EngineName): Prom
 				if (current) current.snippet += ' ';
 			},
 			text(chunk) {
-				if (current) current.snippet += chunk.text;
+				if (current && !ignoredSnippetDepth) current.snippet += chunk.text;
 			},
 		})
 		.on(config.empty, { element() { empty = true; } });
+	if (engine === 'bing') {
+		rewriter.on(`${config.item} p span.algoSlug_icon`, {
+			element(element) {
+				ignoredSnippetDepth++;
+				element.onEndTag(() => { ignoredSnippetDepth--; });
+			},
+		});
+	}
 	for (const selector of config.blocked.split(', ')) {
 		rewriter.on(selector, { element() { blocked = true; } });
 	}
@@ -103,11 +130,24 @@ export async function searchEngine(engine: EngineName, query: string, signal: Ab
 		'Accept-Language': 'en-US,en;q=0.9',
 	};
 	const response = engine === 'bing'
-		? await fetch(`https://www.bing.com/search?${new URLSearchParams({ q: query, setlang: 'en', adlt: 'moderate' })}`, { headers, signal })
+		? await fetch(`https://www.bing.com/search?${new URLSearchParams({ q: query, setlang: 'en', adlt: 'moderate' })}`, { headers, signal, redirect: 'manual' })
 		: await fetch('https://html.duckduckgo.com/html/', {
-			method: 'POST', headers, signal,
-			body: new URLSearchParams({ q: query, b: '', kl: 'us-en' }),
+			method: 'POST', signal, redirect: 'manual',
+			headers: {
+				...headers,
+				'Referer': 'https://html.duckduckgo.com/html/',
+				'Sec-Fetch-Dest': 'document',
+				'Sec-Fetch-Mode': 'navigate',
+				'Sec-Fetch-Site': 'same-origin',
+				'Sec-Fetch-User': '?1',
+				'Cookie': 'kl=us-en',
+			},
+			body: new URLSearchParams({ q: quoteBangs(query), b: '', kl: 'us-en' }),
 		});
+	if (engine === 'duckduckgo' && response.status === 303) {
+		await response.body?.cancel();
+		return [];
+	}
 	if (!response.ok || response.status === 202) {
 		await response.body?.cancel();
 		throw new EngineError([202, 403, 429].includes(response.status) ? 'blocked' : 'upstream_error');
