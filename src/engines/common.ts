@@ -2,7 +2,10 @@
 import { decodeHTML } from 'entities';
 
 export type EngineResult = { title: string; url: string; snippets: string[] };
-export type Engine = (query: string, signal: AbortSignal) => Promise<EngineResult[]>;
+export interface Engine {
+	weight: number;
+	search(query: string, signal: AbortSignal): Promise<EngineResult[]>;
+}
 
 export const headers = {
 	'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',

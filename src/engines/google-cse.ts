@@ -39,7 +39,7 @@ interface SearchResponse {
 	results?: { unescapedUrl?: string; titleNoFormatting?: string; contentNoFormatting?: string }[];
 }
 
-export const googleCse: Engine = async (query, signal) => {
+async function search(query: string, signal: AbortSignal): Promise<EngineResult[]> {
 	const token = await getToken(signal);
 	const args = new URLSearchParams({
 		rsz: 'filtered_cse', num: '20', hl: 'en', gl: 'US',
@@ -61,4 +61,6 @@ export const googleCse: Engine = async (query, signal) => {
 		if (parsed) results.push(parsed);
 	}
 	return results;
-};
+}
+
+export const googleCse: Engine = { weight: 1, search };

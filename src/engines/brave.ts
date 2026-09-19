@@ -2,7 +2,7 @@
 import { decodeHTML } from 'entities';
 import { checkResponse, headers, result, type Engine, type EngineResult } from './common';
 
-export const brave: Engine = async (query, signal) => {
+async function search(query: string, signal: AbortSignal): Promise<EngineResult[]> {
 	const response = await fetch(`https://search.brave.com/search?${new URLSearchParams({ q: query, source: 'web' })}`, {
 		signal, redirect: 'manual',
 		headers: {
@@ -70,4 +70,6 @@ export const brave: Engine = async (query, signal) => {
 	await rewriter.transform(response).body!.pipeTo(new WritableStream({ write() {} }));
 	if (blocked) throw new Error(`Brave search: CAPTCHA/challenge form detected (HTTP ${response.status})`);
 	return results;
-};
+}
+
+export const brave: Engine = { weight: 1, search };

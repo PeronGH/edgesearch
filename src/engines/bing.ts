@@ -14,7 +14,7 @@ function destination(href: string): string {
 	return url.href;
 }
 
-export const bing: Engine = async (query, signal) => {
+async function search(query: string, signal: AbortSignal): Promise<EngineResult[]> {
 	const response = await fetch(`https://www.bing.com/search?${new URLSearchParams({ q: query, setlang: 'en', adlt: 'moderate' })}`, {
 		headers, signal, redirect: 'manual',
 	});
@@ -63,4 +63,6 @@ export const bing: Engine = async (query, signal) => {
 	await rewriter.transform(response).body!.pipeTo(new WritableStream({ write() {} }));
 	if (blocked) throw new Error(`Bing search: CAPTCHA detected (HTTP ${response.status})`);
 	return results;
-};
+}
+
+export const bing: Engine = { weight: 0.5, search };

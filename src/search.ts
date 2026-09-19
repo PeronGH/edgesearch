@@ -1,4 +1,4 @@
-import { searchEngine, type EngineName, type EngineResult } from './engines';
+import { engines as engineRegistry, searchEngine, type EngineName, type EngineResult } from './engines';
 
 export type SearchResult = EngineResult & { engines: EngineName[] };
 
@@ -19,7 +19,7 @@ export function mergeResults(groups: { engine: EngineName; results: EngineResult
 			if (seen.has(key)) return;
 			seen.add(key);
 			const existing = merged.get(key);
-			const weight = engine === 'bing' ? 0.5 : 1;
+			const weight = engineRegistry[engine].weight;
 			const score = weight / (60 + index + 1);
 			if (existing) {
 				existing.score += score;
