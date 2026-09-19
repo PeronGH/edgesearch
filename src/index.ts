@@ -1,26 +1,20 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.jsonc`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import { engineNames, type EngineName } from './engines';
+import { search } from './search';
 
 export default {
-	async fetch(request, env, ctx): Promise<Response> {
+	async fetch(request): Promise<Response> {
 		const url = new URL(request.url);
-		switch (url.pathname) {
-			case '/message':
-				return new Response('Hello, World!');
-			case '/random':
-				return new Response(crypto.randomUUID());
-			default:
-				return new Response('Not Found', { status: 404 });
+		if (url.pathname !== '/api/v1/search') return Response.json({ error: 'Not found' }, { status: 404 });
+		if (request.method !== 'GET') return Response.json({ error: 'Use GET' }, { status: 405, headers: { Allow: 'GET' } });
+		const query = url.searchParams.get('q')?.trim();
+		const limit = Number(url.searchParams.get('limit') ?? 10);
+		const engines = [...new Set(url.searchParams.get('engines')?.split(',') ?? engineNames)];
+		if (!query || query.length > 499) return Response.json({ error: 'q must contain 1–499 characters' }, { status: 400 });
+		if (!Number.isInteger(limit) || limit < 1 || limit > 20) return Response.json({ error: 'limit must be an integer from 1 to 20' }, { status: 400 });
+		if (engines.some((engine) => !engineNames.includes(engine as EngineName))) {
+			return Response.json({ error: `engines must be a comma-separated selection of ${engineNames.join(',')}` }, { status: 400 });
 		}
+		const { body, status } = await search(query, engines as EngineName[], limit);
+		return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 	},
 } satisfies ExportedHandler<Env>;

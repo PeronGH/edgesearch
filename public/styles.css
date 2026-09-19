@@ -1,0 +1,19 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; line-height: 1.5; }
+body { margin: 0; }
+main { max-width: 48rem; margin: 3rem auto; padding: 0 1.25rem; }
+h1 { font-size: 1.6rem; }
+h1 a { color: inherit; text-decoration: none; }
+label { display: block; margin-bottom: .5rem; }
+.search { display: flex; gap: .5rem; }
+input, button { font: inherit; padding: .7rem; border: 1px solid #888; border-radius: .4rem; }
+input { flex: 1; min-width: 0; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid #728cff; outline-offset: 3px; }
+a { color: light-dark(#234dba, #a4bcff); }
+#status, small, footer { color: light-dark(#555, #bbb); }
+ol { list-style: none; padding: 0; }
+li { margin: 2rem 0; overflow-wrap: anywhere; }
+h2 { font-size: 1.2rem; margin-bottom: .2rem; }
+.url { color: light-dark(#286438, #a2cfac); font-size: .85rem; }
+p { margin: .6rem 0; }
+footer { border-top: 1px solid #888; padding-top: 1rem; font-size: .85rem; }

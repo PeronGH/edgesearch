@@ -1,32 +1,23 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Hello, World!</title>
-	</head>
-	<body>
-		<h1 id="heading"></h1>
-		<p>This page comes from a static asset stored at `public/index.html` as configured in `wrangler.jsonc`.</p>
-		<button id="button" type="button">Fetch a random UUID</button>
-		<output id="random" for="button"></output>
-		<script>
-			fetch('/message')
-				.then((resp) => resp.text())
-				.then((text) => {
-					const h1 = document.getElementById('heading');
-					h1.textContent = text;
-				});
-
-			const button = document.getElementById("button");
-			button.addEventListener("click", () => {
-				fetch('/random')
-					.then((resp) => resp.text())
-					.then((text) => {
-						const random = document.getElementById('random');
-						random.textContent = text;
-					});
-			});
-		</script>
-	</body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>EdgeSearch</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1><a href="/">EdgeSearch</a></h1>
+    <form role="search">
+      <label for="query">Search the web</label>
+      <div class="search"><input id="query" name="q" type="search" required maxlength="499" autocomplete="off"><button>Search</button></div>
+    </form>
+    <p id="status" role="status" aria-live="polite"></p>
+    <ol id="results"></ol>
+    <footer>Web results from Bing and DuckDuckGo · <a href="/api/v1/search?q=cloudflare">JSON API</a> · <a href="https://github.com/PeronGH/edgesearch">Source</a></footer>
+  </main>
+</body>
 </html>

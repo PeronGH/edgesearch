@@ -2,15 +2,20 @@
 	"name": "edgesearch",
 	"version": "0.0.0",
 	"private": true,
+	"license": "AGPL-3.0-or-later",
 	"scripts": {
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
+		"check": "tsc --noEmit",
 		"cf-typegen": "wrangler types"
 	},
 	"devDependencies": {
 		"@types/node": "^26.6.2",
 		"typescript": "^5.5.2",
 		"wrangler": "^4.135.0"
+	},
+	"dependencies": {
+		"entities": "^8.1.0"
 	}
 }
