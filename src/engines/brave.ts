@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { decodeHTML } from 'entities';
-import { checkResponse, headers, parse, type Engine } from './common';
-import { parseHTML } from './html';
+import { checkResponse, EngineError, headers, result, type Engine, type EngineResult } from './common';
 
 export const brave: Engine = async (query, signal) => {
 	const response = await fetch(`https://search.brave.com/search?${new URLSearchParams({ q: query, source: 'web' })}`, {
@@ -13,20 +12,62 @@ export const brave: Engine = async (query, signal) => {
 		},
 	});
 	await checkResponse(response);
-	return parse(signal, () => parseHTML(response, {
-		item: 'div.snippet',
-		link: 'a',
-		title: 'div[class*="title"]',
-		snippet: 'div.content',
-		firstSnippet: true,
-		blocked: ['form[action*="captcha"]', '#challenge-form'],
-		ignoreSnippet: 'div.content span[class*="t-secondary"]',
-		cleanSnippet: (text) => text.replace(/^[\s-]+/, ''),
-		destination(href) {
-			href = decodeHTML(href);
-			// Relative URLs in Brave's result containers are typically ads.
-			if (!/^(https?:)?\/\//i.test(href)) return '';
-			return new URL(href, 'https://search.brave.com').href;
-		},
-	}));
+	const results: EngineResult[] = [];
+	let current: { title: string; href?: string; snippet: string; hasTitle: boolean; inTitle: boolean; hasSnippet: boolean; inSnippet: boolean } | undefined;
+	let dateDepth = 0;
+	let blocked = false;
+	const rewriter = new HTMLRewriter()
+		.on('div.snippet', {
+			element(element) {
+				const parent = current;
+				const item = { title: '', href: undefined as string | undefined, snippet: '', hasTitle: false, inTitle: false, hasSnippet: false, inSnippet: false };
+				current = item;
+				element.onEndTag(() => {
+					const href = decodeHTML(item.href ?? '');
+					// Relative URLs in Brave's result containers are typically ads.
+					if (/^(https?:)?\/\//i.test(href)) {
+						const parsed = result(item.title, new URL(href, 'https://search.brave.com').href, item.snippet.replace(/^[\s-]+/, ''));
+						if (parsed) results.push(parsed);
+					}
+					current = parent;
+				});
+			},
+		})
+		.on('div.snippet a', {
+			element(element) {
+				if (current && current.href === undefined) current.href = element.getAttribute('href') ?? '';
+			},
+		})
+		.on('div.snippet div[class*="title"]', {
+			element(element) {
+				if (!current || current.hasTitle) return;
+				const item = current;
+				item.hasTitle = true;
+				item.inTitle = true;
+				element.onEndTag(() => { item.inTitle = false; });
+			},
+			text(chunk) { if (current?.inTitle) current.title += chunk.text; },
+		})
+		.on('div.snippet div.content', {
+			element(element) {
+				if (!current || current.hasSnippet) return;
+				const item = current;
+				item.hasSnippet = true;
+				item.inSnippet = true;
+				element.onEndTag(() => { item.inSnippet = false; });
+			},
+			text(chunk) { if (current?.inSnippet && !dateDepth) current.snippet += chunk.text; },
+		})
+		.on('div.snippet div.content span[class*="t-secondary"]', {
+			element(element) {
+				dateDepth++;
+				element.onEndTag(() => { dateDepth--; });
+			},
+		});
+	for (const selector of ['form[action*="captcha"]', '#challenge-form']) {
+		rewriter.on(selector, { element() { blocked = true; } });
+	}
+	await rewriter.transform(response).body!.pipeTo(new WritableStream({ write() {} }));
+	if (blocked) throw new EngineError('blocked');
+	return results;
 };

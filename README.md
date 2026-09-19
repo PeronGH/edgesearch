@@ -15,7 +15,7 @@ Open http://localhost:8787 or call:
 curl 'http://localhost:8787/api/v1/search?q=cloudflare+workers'
 ```
 
-`GET /api/v1/search` accepts `q` (1–499 characters) and an optional comma-separated `engines` selection: `bing`, `duckduckgo`, `brave`, `google_cse`. All four run by default. Results contain `title`, `url`, `snippets` (plain-text strings), and `engines`.
+`GET /api/v1/search` accepts a nonempty `q` and an optional comma-separated `engines` selection: `bing`, `duckduckgo`, `brave`, `google_cse`. All four run by default. Results contain `title`, `url`, `snippets` (plain-text strings), and `engines`.
 
 ```json
 {
@@ -33,7 +33,7 @@ curl 'http://localhost:8787/api/v1/search?q=cloudflare+workers'
 }
 ```
 
-Search waits for all selected engines without an application-level timeout. Successful engines still return results when another fails. Invalid input returns 400; failure of every selected engine returns 502. Engine error codes are `blocked`, `upstream_error`, and `parse_error`. A recognized empty search returns 200 with no results.
+Search waits for all selected engines without an application-level timeout. Successful engines still return results when another fails. Invalid input returns 400; failure of every selected engine returns 502. Engine failures are reported in `engine_errors`, preserving exception messages. An empty search returns 200 with no results.
 
 Google CSE uses the same public Blackle CSE ID as SearXNG, not the official API. Its bootstrap token is cached in memory for one hour per Worker isolate; a cold or expired cache requires an extra request. Availability depends on that third-party CSE configuration.
 

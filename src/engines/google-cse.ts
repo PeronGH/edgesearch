@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { checkResponse, EngineError, headers, parse, result, type Engine, type EngineResult } from './common';
+import { checkResponse, headers, result, type Engine, type EngineResult } from './common';
 
 const cx = 'partner-pub-8993703457585266:4862972284';
 interface Token {
@@ -16,21 +16,19 @@ async function getToken(signal: AbortSignal): Promise<Token> {
 		headers, signal, redirect: 'manual',
 	});
 	await checkResponse(response);
-	const token = await parse(signal, async () => {
-		const text = await response.text();
-		const options = JSON.parse(text.slice(text.lastIndexOf('({') + 1, text.lastIndexOf('});') + 1)) as {
-			cse_token?: string;
-			cselibVersion?: string;
-			exp?: string[];
-		};
-		if (!options.cse_token) throw new EngineError('upstream_error');
-		return {
-			cse_tok: options.cse_token,
-			cselibv: options.cselibVersion ?? '',
-			exp: options.exp?.join(',') ?? '',
-			expires: Date.now() + 3_600_000,
-		};
-	});
+	const text = await response.text();
+	const options = JSON.parse(text.slice(text.lastIndexOf('({') + 1, text.lastIndexOf('});') + 1)) as {
+		cse_token?: string;
+		cselibVersion?: string;
+		exp?: string[];
+	};
+	if (!options.cse_token) throw new Error('Google CSE bootstrap response has no cse_token');
+	const token = {
+		cse_tok: options.cse_token,
+		cselibv: options.cselibVersion ?? '',
+		exp: options.exp?.join(',') ?? '',
+		expires: Date.now() + 3_600_000,
+	};
 	// Cache only resolved data: requests must not share cancellation or live I/O.
 	cachedToken = token;
 	return token;
@@ -54,15 +52,13 @@ export const googleCse: Engine = async (query, signal) => {
 		headers: { ...headers, Accept: '*/*', Referer: 'https://cse.google.com/', Cookie: 'CONSENT=YES+' },
 	});
 	await checkResponse(response);
-	return parse(signal, async () => {
-		const text = await response.text();
-		const data = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)) as SearchResponse;
-		if (data.error) throw new EngineError(data.error.code === 429 ? 'blocked' : 'upstream_error');
-		const results: EngineResult[] = [];
-		for (const item of data.results ?? []) {
-			const parsed = result(item.titleNoFormatting ?? '', item.unescapedUrl ?? '', item.contentNoFormatting ?? '');
-			if (parsed) results.push(parsed);
-		}
-		return results;
-	});
+	const text = await response.text();
+	const data = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)) as SearchResponse;
+	if (data.error) throw new Error(data.error.message ?? `Google CSE error ${data.error.code}`);
+	const results: EngineResult[] = [];
+	for (const item of data.results ?? []) {
+		const parsed = result(item.titleNoFormatting ?? '', item.unescapedUrl ?? '', item.contentNoFormatting ?? '');
+		if (parsed) results.push(parsed);
+	}
+	return results;
 };

@@ -1,4 +1,4 @@
-import { EngineError, searchEngine, type EngineName, type EngineResult, type ErrorCode } from './engines';
+import { searchEngine, type EngineName, type EngineResult } from './engines';
 
 export type SearchResult = EngineResult & { engines: EngineName[] };
 
@@ -38,8 +38,7 @@ export async function search(query: string, engines: EngineName[], signal: Abort
 			return { engine, results: await searchEngine(engine, query, signal) };
 		} catch (error) {
 			signal.throwIfAborted();
-			const code: ErrorCode = error instanceof EngineError ? error.code : 'upstream_error';
-			return { engine, error: code };
+			return { engine, error: error instanceof Error ? error.message : String(error) };
 		}
 	}));
 	const successful = outcomes.flatMap((outcome) => outcome.results ? [{ engine: outcome.engine, results: outcome.results }] : []);

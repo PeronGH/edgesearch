@@ -8,7 +8,7 @@ export default {
 		if (request.method !== 'GET') return Response.json({ error: 'Use GET' }, { status: 405, headers: { Allow: 'GET' } });
 		const query = url.searchParams.get('q')?.trim();
 		const engines = [...new Set(url.searchParams.get('engines')?.split(',') ?? engineNames)];
-		if (!query || query.length > 499) return Response.json({ error: 'q must contain 1–499 characters' }, { status: 400 });
+		if (!query) return Response.json({ error: 'q is required' }, { status: 400 });
 		if (engines.some((engine) => !engineNames.includes(engine as EngineName))) {
 			return Response.json({ error: `engines must be a comma-separated selection of ${engineNames.join(',')}` }, { status: 400 });
 		}
