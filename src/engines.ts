@@ -4,7 +4,7 @@ import { decodeHTML } from 'entities';
 export const engineNames = ['bing', 'duckduckgo'] as const;
 export type EngineName = (typeof engineNames)[number];
 export type EngineResult = { title: string; url: string; snippets: string[] };
-export type ErrorCode = 'blocked' | 'upstream_error' | 'parse_error' | 'timeout';
+export type ErrorCode = 'blocked' | 'upstream_error' | 'parse_error';
 
 export class EngineError extends Error {
 	constructor(public code: ErrorCode) {
@@ -123,16 +123,16 @@ export async function parseResults(response: Response, engine: EngineName): Prom
 	return results;
 }
 
-export async function searchEngine(engine: EngineName, query: string, signal: AbortSignal): Promise<EngineResult[]> {
+export async function searchEngine(engine: EngineName, query: string): Promise<EngineResult[]> {
 	const headers = {
 		'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
 		'Accept': 'text/html',
 		'Accept-Language': 'en-US,en;q=0.9',
 	};
 	const response = engine === 'bing'
-		? await fetch(`https://www.bing.com/search?${new URLSearchParams({ q: query, setlang: 'en', adlt: 'moderate' })}`, { headers, signal, redirect: 'manual' })
+		? await fetch(`https://www.bing.com/search?${new URLSearchParams({ q: query, setlang: 'en', adlt: 'moderate' })}`, { headers, redirect: 'manual' })
 		: await fetch('https://html.duckduckgo.com/html/', {
-			method: 'POST', signal, redirect: 'manual',
+			method: 'POST', redirect: 'manual',
 			headers: {
 				...headers,
 				'Referer': 'https://html.duckduckgo.com/html/',
@@ -155,7 +155,7 @@ export async function searchEngine(engine: EngineName, query: string, signal: Ab
 	try {
 		return await parseResults(response, engine);
 	} catch (error) {
-		if (signal.aborted || error instanceof EngineError) throw error;
+		if (error instanceof EngineError) throw error;
 		throw new EngineError('parse_error');
 	}
 }

@@ -33,29 +33,23 @@ export function mergeResults(groups: { engine: EngineName; results: EngineResult
 }
 
 export async function search(query: string, engines: EngineName[], limit: number) {
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), 5000);
-	try {
-		const outcomes = await Promise.all(engines.map(async (engine) => {
-			try {
-				return { engine, results: await searchEngine(engine, query, controller.signal) };
-			} catch (error) {
-				const code: ErrorCode = controller.signal.aborted ? 'timeout' : error instanceof EngineError ? error.code : 'upstream_error';
-				return { engine, error: code };
-			}
-		}));
-		const successful = outcomes.flatMap((outcome) => outcome.results ? [{ engine: outcome.engine, results: outcome.results }] : []);
-		const errors = outcomes.filter((outcome) => outcome.error !== undefined).map(({ engine, error }) => ({ engine, error }));
-		return {
-			status: successful.length ? 200 : 502,
-			body: {
-				query,
-				results: mergeResults(successful, limit),
-				partial: errors.length > 0,
-				engine_errors: errors,
-			},
-		};
-	} finally {
-		clearTimeout(timer);
-	}
+	const outcomes = await Promise.all(engines.map(async (engine) => {
+		try {
+			return { engine, results: await searchEngine(engine, query) };
+		} catch (error) {
+			const code: ErrorCode = error instanceof EngineError ? error.code : 'upstream_error';
+			return { engine, error: code };
+		}
+	}));
+	const successful = outcomes.flatMap((outcome) => outcome.results ? [{ engine: outcome.engine, results: outcome.results }] : []);
+	const errors = outcomes.filter((outcome) => outcome.error !== undefined).map(({ engine, error }) => ({ engine, error }));
+	return {
+		status: successful.length ? 200 : 502,
+		body: {
+			query,
+			results: mergeResults(successful, limit),
+			partial: errors.length > 0,
+			engine_errors: errors,
+		},
+	};
 }
