@@ -63,4 +63,4 @@ async function search(query: string, signal: AbortSignal): Promise<EngineResult[
 	return results;
 }
 
-export const googleCse: Engine = { weight: 1, search };
+export const googleCse: Engine = { weight: 1.2, search };

@@ -41,4 +41,4 @@ async function search(query: string, signal: AbortSignal): Promise<EngineResult[
 	return results;
 }
 
-export const yep: Engine = { weight: 1, search };
+export const yep: Engine = { weight: 0.7, search };
