@@ -32,11 +32,12 @@ export function mergeResults(groups: { engine: EngineName; results: EngineResult
 	return [...merged.values()].sort((a, b) => b.score - a.score).slice(0, limit).map(({ result }) => result);
 }
 
-export async function search(query: string, engines: EngineName[], limit: number) {
+export async function search(query: string, engines: EngineName[], limit: number, signal: AbortSignal) {
 	const outcomes = await Promise.all(engines.map(async (engine) => {
 		try {
-			return { engine, results: await searchEngine(engine, query) };
+			return { engine, results: await searchEngine(engine, query, signal) };
 		} catch (error) {
+			signal.throwIfAborted();
 			const code: ErrorCode = error instanceof EngineError ? error.code : 'upstream_error';
 			return { engine, error: code };
 		}

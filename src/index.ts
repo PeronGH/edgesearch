@@ -14,7 +14,7 @@ export default {
 		if (engines.some((engine) => !engineNames.includes(engine as EngineName))) {
 			return Response.json({ error: `engines must be a comma-separated selection of ${engineNames.join(',')}` }, { status: 400 });
 		}
-		const { body, status } = await search(query, engines as EngineName[], limit);
+		const { body, status } = await search(query, engines as EngineName[], limit, request.signal);
 		return Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 	},
 } satisfies ExportedHandler<Env>;

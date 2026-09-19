@@ -123,16 +123,16 @@ export async function parseResults(response: Response, engine: EngineName): Prom
 	return results;
 }
 
-export async function searchEngine(engine: EngineName, query: string): Promise<EngineResult[]> {
+export async function searchEngine(engine: EngineName, query: string, signal: AbortSignal): Promise<EngineResult[]> {
 	const headers = {
 		'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
 		'Accept': 'text/html',
 		'Accept-Language': 'en-US,en;q=0.9',
 	};
 	const response = engine === 'bing'
-		? await fetch(`https://www.bing.com/search?${new URLSearchParams({ q: query, setlang: 'en', adlt: 'moderate' })}`, { headers, redirect: 'manual' })
+		? await fetch(`https://www.bing.com/search?${new URLSearchParams({ q: query, setlang: 'en', adlt: 'moderate' })}`, { headers, signal, redirect: 'manual' })
 		: await fetch('https://html.duckduckgo.com/html/', {
-			method: 'POST', redirect: 'manual',
+			method: 'POST', signal, redirect: 'manual',
 			headers: {
 				...headers,
 				'Referer': 'https://html.duckduckgo.com/html/',
@@ -155,6 +155,7 @@ export async function searchEngine(engine: EngineName, query: string): Promise<E
 	try {
 		return await parseResults(response, engine);
 	} catch (error) {
+		signal.throwIfAborted();
 		if (error instanceof EngineError) throw error;
 		throw new EngineError('parse_error');
 	}
