@@ -26,7 +26,7 @@ async function snippetText(html: string, signal: AbortSignal): Promise<string> {
 }
 
 async function search(query: string, signal: AbortSignal): Promise<EngineResult[]> {
-	const args = new URLSearchParams({ query, safeSearch: 'moderate', limit: '20', hl: 'en' });
+	const args = new URLSearchParams({ query, safeSearch: 'off', limit: '20', hl: 'en' });
 	const response = await fetch(`https://api.yep.com/search?${args}`, {
 		signal, redirect: 'manual',
 		headers: { ...headers, Accept: 'application/json', Referer: 'https://yep.com/', Origin: 'https://yep.com' },

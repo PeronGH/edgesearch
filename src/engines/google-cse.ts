@@ -43,7 +43,7 @@ async function search(query: string, signal: AbortSignal): Promise<EngineResult[
 	const token = await getToken(signal);
 	const args = new URLSearchParams({
 		rsz: 'filtered_cse', num: '20', hl: 'en', gl: 'US',
-		cselibv: token.cselibv, cx, q: query, safe: 'medium',
+		cselibv: token.cselibv, cx, q: query, safe: 'off',
 		cse_tok: token.cse_tok, callback: '_', rurl: '', searchtype: '',
 	});
 	if (token.exp) args.set('exp', token.exp);

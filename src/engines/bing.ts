@@ -15,7 +15,7 @@ function destination(href: string): string {
 }
 
 async function search(query: string, signal: AbortSignal): Promise<EngineResult[]> {
-	const response = await fetch(`https://www.bing.com/search?${new URLSearchParams({ q: query, setlang: 'en', adlt: 'moderate' })}`, {
+	const response = await fetch(`https://www.bing.com/search?${new URLSearchParams({ q: query, setlang: 'en', adlt: 'off' })}`, {
 		headers, signal, redirect: 'manual',
 	});
 	await checkResponse(response, 'Bing search');

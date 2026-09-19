@@ -8,7 +8,7 @@ async function search(query: string, signal: AbortSignal): Promise<EngineResult[
 		headers: {
 			...headers,
 			'Accept-Encoding': 'gzip, deflate',
-			'Cookie': 'safesearch=moderate; useLocation=0; summarizer=0; country=us; ui_lang=en-us',
+			'Cookie': 'safesearch=off; useLocation=0; summarizer=0; country=us; ui_lang=en-us',
 		},
 	});
 	await checkResponse(response, 'Brave search');
