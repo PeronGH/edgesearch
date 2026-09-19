@@ -10,7 +10,7 @@ function keyFor(href: string): string {
 	return url.href;
 }
 
-export function mergeResults(groups: { engine: EngineName; results: EngineResult[] }[], limit: number): SearchResult[] {
+export function mergeResults(groups: { engine: EngineName; results: EngineResult[] }[]): SearchResult[] {
 	const merged = new Map<string, { result: SearchResult; score: number }>();
 	for (const { engine, results } of groups) {
 		const seen = new Set<string>();
@@ -29,10 +29,10 @@ export function mergeResults(groups: { engine: EngineName; results: EngineResult
 			}
 		});
 	}
-	return [...merged.values()].sort((a, b) => b.score - a.score).slice(0, limit).map(({ result }) => result);
+	return [...merged.values()].sort((a, b) => b.score - a.score).map(({ result }) => result);
 }
 
-export async function search(query: string, engines: EngineName[], limit: number, signal: AbortSignal) {
+export async function search(query: string, engines: EngineName[], signal: AbortSignal) {
 	const outcomes = await Promise.all(engines.map(async (engine) => {
 		try {
 			return { engine, results: await searchEngine(engine, query, signal) };
@@ -48,7 +48,7 @@ export async function search(query: string, engines: EngineName[], limit: number
 		status: successful.length ? 200 : 502,
 		body: {
 			query,
-			results: mergeResults(successful, limit),
+			results: mergeResults(successful),
 			partial: errors.length > 0,
 			engine_errors: errors,
 		},
