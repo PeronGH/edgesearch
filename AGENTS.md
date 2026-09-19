@@ -1,3 +1,19 @@
+# Project guidance
+
+Keep README.md user-facing: purpose, usage, API behavior, and deployment. Implementation details belong here.
+
+Do not add tests or run local end-to-end checks. Use `bun run check` for static verification.
+
+## Implementation
+
+- Each engine has its own adapter in `src/engines/`. Engines run concurrently with the incoming request's abort signal and no application-level timeout.
+- HTML engines use HTMLRewriter directly. Google CSE parses JSONP. Results are deduplicated and ranked with reciprocal-rank fusion; titles and snippets are not truncated, and merged results have no count limit.
+- Google CSE uses SearXNG's public Blackle CSE ID, not the official API. Bootstrap tokens are cached in memory for one hour per isolate; cold or expired caches require an extra request. Availability depends on that third-party configuration.
+- Search is first-page-only and English/US-oriented. There is no pagination, image search, answer generation, or destination-page fetching. Provider blocking and markup changes can break adapters.
+- Partial failures preserve successful engines' results and report exception messages. Empty results are successful responses, not parser errors.
+- The project targets Workers Free with no database or paid bindings. Deployed CPU usage and provider availability need verification; local behavior does not establish either.
+- The static GUI must not contain private credentials. Restrict deployment access externally if authentication is needed.
+
 # Cloudflare Workers
 
 STOP. Your knowledge of Cloudflare Workers APIs and limits may be outdated. Always retrieve current documentation before any Workers, KV, R2, D1, Durable Objects, Queues, Vectorize, AI, or Agents SDK task.

@@ -1,6 +1,6 @@
 # EdgeSearch
 
-A small Workers-native web search API and GUI. Queries search engines concurrently, extracts HTML results with HTMLRewriter and CSE results from JSONP, and merges matching URLs using reciprocal-rank fusion. No database or API keys required.
+A web search JSON API and minimal GUI for Cloudflare Workers. No API keys required.
 
 ## Run
 
@@ -33,11 +33,7 @@ curl 'http://localhost:8787/api/v1/search?q=cloudflare+workers'
 }
 ```
 
-Search waits for all selected engines without an application-level timeout. Successful engines still return results when another fails. Invalid input returns 400; failure of every selected engine returns 502. Engine failures are reported in `engine_errors`, preserving exception messages. An empty search returns 200 with no results.
-
-Google CSE uses the same public Blackle CSE ID as SearXNG, not the official API. Its bootstrap token is cached in memory for one hour per Worker isolate; a cold or expired cache requires an extra request. Availability depends on that third-party CSE configuration.
-
-First-page English/US-oriented web results only; no pagination, images, answers, or destination-page fetching. Providers may block Cloudflare IPs or change their markup. All merged first-page results are returned without a result-count limit.
+Returns all available first-page web results, without pagination or image search. Partial results include engine failures in `engine_errors`. Invalid input returns 400; failure of every selected engine returns 502.
 
 ## Deploy
 
@@ -45,9 +41,7 @@ First-page English/US-oriented web results only; no pagination, images, answers,
 bun run deploy
 ```
 
-The endpoint is public and unauthenticated: restrict deployment access externally if needed. Do not put private credentials in the static GUI. Search terms are sent to the selected providers and may appear in platform request logs.
-
-The implementation targets Workers Free, but deployed CPU usage and provider availability must be measured before relying on it. Local development does not establish either. No paid bindings are required.
+The endpoint is public and unauthenticated. Search terms are sent to the selected providers and may appear in platform request logs.
 
 ## License
 
