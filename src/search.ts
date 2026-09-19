@@ -19,7 +19,8 @@ export function mergeResults(groups: { engine: EngineName; results: EngineResult
 			if (seen.has(key)) return;
 			seen.add(key);
 			const existing = merged.get(key);
-			const score = 1 / (60 + index + 1);
+			const weight = engine === 'bing' ? 0.5 : 1;
+			const score = weight / (60 + index + 1);
 			if (existing) {
 				existing.score += score;
 				existing.result.engines.push(engine);
