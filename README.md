@@ -15,7 +15,7 @@ Open http://localhost:8787 or call:
 curl 'http://localhost:8787/api/v1/search?q=cloudflare+workers'
 ```
 
-`GET /api/v1/search` accepts a nonempty `q` and an optional comma-separated `engines` selection: `bing`, `brave`, `google_cse`, `yep`. All four run by default. Results contain `title`, `url`, `snippets` (plain-text strings), and `engines`.
+`GET /api/v1/search` accepts a nonempty `q` and an optional comma-separated `engines` selection: `bing`, `brave`, `google_cse`, `yep`, `yandex`. All five run by default. Results contain `title`, `url`, `snippets` (plain-text strings), and `engines`.
 
 ```json
 {

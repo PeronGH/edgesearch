@@ -2,11 +2,12 @@ import { bing } from './bing';
 import { brave } from './brave';
 import { googleCse } from './google-cse';
 import { yep } from './yep';
+import { yandex } from './yandex';
 import type { Engine } from './common';
 
 export type { EngineResult } from './common';
 
-export const engines = { bing, brave, google_cse: googleCse, yep } satisfies Record<string, Engine>;
+export const engines = { bing, brave, google_cse: googleCse, yep, yandex } satisfies Record<string, Engine>;
 export type EngineName = keyof typeof engines;
 export const engineNames = Object.keys(engines) as EngineName[];
 
