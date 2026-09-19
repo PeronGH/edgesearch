@@ -1,6 +1,6 @@
 # EdgeSearch
 
-A small Workers-native web search API and GUI. Queries Bing and DuckDuckGo concurrently, extracts results with HTMLRewriter, and merges matching URLs using reciprocal-rank fusion. No database or API keys required.
+A small Workers-native web search API and GUI. Queries search engines concurrently, extracts results with HTMLRewriter, and merges matching URLs using reciprocal-rank fusion. No database or API keys required.
 
 ## Run
 
