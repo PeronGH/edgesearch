@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { checkResponse, headers, result, type Engine, type EngineResult } from './common';
+import { fetch } from '../fetch';
 
 interface YepResult {
 	url: string;

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { decodeHTML } from 'entities';
 import { checkResponse, headers, result, type Engine, type EngineResult } from './common';
+import { fetch } from '../fetch';
 
 function destination(href: string): string {
 	let url = new URL(decodeHTML(href), 'https://www.bing.com');

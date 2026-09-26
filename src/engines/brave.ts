@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { decodeHTML } from 'entities';
 import { checkResponse, headers, result, type Engine, type EngineResult } from './common';
+import { fetch } from '../fetch';
 
 async function search(query: string, signal: AbortSignal): Promise<EngineResult[]> {
 	const response = await fetch(`https://search.brave.com/search?${new URLSearchParams({ q: query, source: 'web' })}`, {
