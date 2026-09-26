@@ -7,7 +7,7 @@ Do not add tests or run local end-to-end checks. Use `bun run check` for static 
 ## Implementation
 
 - Each engine has its own adapter in `src/engines/`. Engines run concurrently with the incoming request's abort signal and no application-level timeout.
-- All outbound requests use `fetch` from `src/fetch.ts`, which wraps `@pixel/socket-fetch` over `cloudflare:sockets`. Never use the global `fetch`. The socket client is HTTP/1.1-only, cannot reach hosts behind Cloudflare, and bypasses `global_fetch_strictly_public`.
+- All outbound requests use `fetch` from `src/fetch.ts`, which wraps `@pixel/socket-fetch` over `cloudflare:sockets`. The only exception is Yep, whose API is behind Cloudflare and uses the global `fetch`. The socket client is HTTP/1.1-only, cannot reach hosts behind Cloudflare, and bypasses `global_fetch_strictly_public`.
 - HTML engines use HTMLRewriter directly. Google CSE parses JSONP. Results are deduplicated and ranked with reciprocal-rank fusion; titles and snippets are not truncated, and merged results have no count limit.
 - Google CSE uses SearXNG's public Blackle CSE ID, not the official API. Bootstrap tokens are cached in memory for one hour per isolate; cold or expired caches require an extra request. Availability depends on that third-party configuration.
 - Search is first-page-only and English/US-oriented. There is no pagination, image search, answer generation, or destination-page fetching. Provider blocking and markup changes can break adapters.
